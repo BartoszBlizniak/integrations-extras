@@ -39,7 +39,6 @@ def test_check(
     aggregator,
     instance_good,
     usage_resp_good,
-    entitlements_test_json,
     audit_log_resp_good,
     members_resp,
     mocker,
@@ -64,9 +63,6 @@ def test_check(
             "bandwidth_configured_bytes": 100000000000,
             "bandwidth_configured_gb": 100.0,
         }
-    )
-    check.get_parsed_entitlement_info = MagicMock(
-        return_value={"token_count": 119, "token_bandwidth_total": 37802418, "token_download_total": 240}
     )
     check.get_parsed_audit_log_info = MagicMock(
         return_value=[
@@ -103,9 +99,6 @@ def test_check(
     aggregator.assert_service_check('cloudsmith.bandwidth', CloudsmithCheck.OK)
     aggregator.assert_metric("cloudsmith.bandwidth_used", 0.0, count=1)
     aggregator.assert_metric("cloudsmith.storage_used", 0.914, count=1)
-    aggregator.assert_metric("cloudsmith.token_bandwidth_total", 37802418, count=1)
-    aggregator.assert_metric("cloudsmith.token_count", 119, count=1)
-    aggregator.assert_metric("cloudsmith.token_download_total", 240, count=1)
     aggregator.assert_metric("cloudsmith.bandwidth_plan_limit_bytes", 100000000000, count=1)
     aggregator.assert_metric("cloudsmith.bandwidth_plan_limit_gb", 100.0, count=1)
     aggregator.assert_metric("cloudsmith.bandwidth_used_bytes", 0, count=1)
@@ -148,7 +141,7 @@ def test_check(
     aggregator.assert_metrics_using_metadata(get_metadata_metrics())
 
 
-def test_check_bad_usage(aggregator, instance_good, usage_resp_warning, usage_resp_critical, entitlements_test_json):
+def test_check_bad_usage(aggregator, instance_good, usage_resp_warning, usage_resp_critical):
     check = CloudsmithCheck('cloudsmith', {}, [instance_good])
     check.get_parsed_members_info = MagicMock(return_value=[])
 
@@ -172,9 +165,6 @@ def test_check_bad_usage(aggregator, instance_good, usage_resp_warning, usage_re
             "bandwidth_configured_bytes": 100000000000,
             "bandwidth_configured_gb": 100.0,
         }
-    )
-    check.get_parsed_entitlement_info = MagicMock(
-        return_value={"token_count": 119, "token_bandwidth_total": 37802418, "token_download_total": 240}
     )
     check.get_license_policy_violation_info = MagicMock(return_value={"results": []})
     check.get_vuln_policy_violation_info = MagicMock(return_value={"results": []})
@@ -214,7 +204,7 @@ def test_check_bad_usage(aggregator, instance_good, usage_resp_warning, usage_re
     aggregator.assert_metric("cloudsmith.bandwidth_used", 100.0, count=1)
 
 
-def test_check_badly_formatted_json(aggregator, instance_good, entitlements_test_bad_json, usage_resp_bad_json):
+def test_check_badly_formatted_json(aggregator, instance_good, usage_resp_bad_json):
     check = CloudsmithCheck('cloudsmith', {}, [instance_good])
     check.get_parsed_members_info = MagicMock(return_value=[])
 
@@ -239,9 +229,6 @@ def test_check_badly_formatted_json(aggregator, instance_good, entitlements_test
             "bandwidth_configured_gb": -1,
         }
     )
-    check.get_parsed_entitlement_info = MagicMock(
-        return_value={"token_count": -1, "token_bandwidth_total": -1, "token_download_total": -1}
-    )
     check.get_license_policy_violation_info = MagicMock(return_value={"results": []})
     check.get_vuln_policy_violation_info = MagicMock(return_value={"results": []})
     check.check(None)
@@ -250,9 +237,6 @@ def test_check_badly_formatted_json(aggregator, instance_good, entitlements_test
     aggregator.assert_service_check('cloudsmith.bandwidth', CloudsmithCheck.UNKNOWN)
     aggregator.assert_metric("cloudsmith.storage_used", -1, count=1)
     aggregator.assert_metric("cloudsmith.bandwidth_used", -1, count=1)
-    aggregator.assert_metric("cloudsmith.token_bandwidth_total", -1, count=1)
-    aggregator.assert_metric("cloudsmith.token_count", -1, count=1)
-    aggregator.assert_metric("cloudsmith.token_download_total", -1, count=1)
     aggregator.assert_metric("cloudsmith.bandwidth_used_bytes", -1, count=1)
     aggregator.assert_metric("cloudsmith.bandwidth_used_gb", -1, count=1)
     aggregator.assert_metric("cloudsmith.storage_used_bytes", -1, count=1)
@@ -267,7 +251,6 @@ def test_vulnerability_and_license_violations(
     aggregator,
     instance_good,
     usage_resp_good,
-    entitlements_test_json,
     audit_log_resp_good,
     license_policy_violation_resp,
     license_policy_violation_resp_bad,
@@ -294,9 +277,6 @@ def test_vulnerability_and_license_violations(
             "bandwidth_configured_gb": -1,
         }
     )
-    check.get_parsed_entitlement_info = MagicMock(
-        return_value={"token_count": 119, "token_bandwidth_total": 37802418, "token_download_total": 240}
-    )
     check.get_parsed_audit_log_info = MagicMock(return_value=audit_log_resp_good)
     check.get_parsed_license_policy_violations_info = MagicMock(
         side_effect=[license_policy_violation_resp_bad, license_policy_violation_resp]
@@ -310,9 +290,6 @@ def test_vulnerability_and_license_violations(
 
     aggregator.assert_metric("cloudsmith.bandwidth_used", 0.0)
     aggregator.assert_metric("cloudsmith.storage_used", 0.914)
-    aggregator.assert_metric("cloudsmith.token_bandwidth_total", 37802418)
-    aggregator.assert_metric("cloudsmith.token_count", 119)
-    aggregator.assert_metric("cloudsmith.token_download_total", 240)
     aggregator.assert_metric("cloudsmith.storage_plan_limit_bytes", -1)
     aggregator.assert_metric("cloudsmith.storage_plan_limit_gb", -1)
     aggregator.assert_metric("cloudsmith.bandwidth_plan_limit_bytes", -1)
@@ -352,7 +329,6 @@ def test_member_metrics_and_events(
     aggregator,
     instance_good,
     usage_resp_good,
-    entitlements_test_json,
     audit_log_resp_good,
     members_resp,
     mocker,
@@ -378,9 +354,6 @@ def test_member_metrics_and_events(
             "bandwidth_configured_gb": -1,
         }
     )
-    check.get_parsed_entitlement_info = MagicMock(
-        return_value={"token_count": 119, "token_bandwidth_total": 37802418, "token_download_total": 240}
-    )
     check.get_parsed_audit_log_info = MagicMock(return_value=audit_log_resp_good)
     check.get_parsed_vulnerabilities_info = MagicMock(return_value=[])
     check.get_license_policy_violation_info = MagicMock(return_value={"results": []})
@@ -404,11 +377,6 @@ def test_member_metrics_and_events(
                 "cloudsmith_org:cloudsmith",
             ],
         )
-    aggregator.assert_metric("cloudsmith.token_bandwidth_total", 37802418)
-    aggregator.assert_metric("cloudsmith.token_count", 119)
-    aggregator.assert_metric("cloudsmith.token_download_total", 240)
-
-    # Additional metrics for member metrics test
     aggregator.assert_metric("cloudsmith.bandwidth_used", -1)
     aggregator.assert_metric("cloudsmith.bandwidth_used_bytes", -1)
     aggregator.assert_metric("cloudsmith.bandwidth_used_gb", -1)
@@ -602,11 +570,11 @@ def test_filter_vulnerabilities(instance_good):
     assert "Critical" in severities
 
 
-def test_realtime_bandwidth_metrics(aggregator, instance_good, usage_resp_good, entitlements_test_json):
+def test_realtime_bandwidth_metrics(aggregator, instance_good, usage_resp_good):
     # Enable realtime bandwidth
     check = CloudsmithCheck('cloudsmith', {}, [dict(instance_good, enable_realtime_bandwidth=True)])
 
-    # Mock parsed usage/entitlements (check() uses parsed versions)
+    # Mock parsed usage (check() uses parsed versions)
     check.get_parsed_usage_info = MagicMock(
         return_value={
             "storage_mark": CloudsmithCheck.OK,
@@ -626,9 +594,6 @@ def test_realtime_bandwidth_metrics(aggregator, instance_good, usage_resp_good, 
             "storage_configured_gb": 2.0,
             "bandwidth_configured_gb": 4.0,
         }
-    )
-    check.get_parsed_entitlement_info = MagicMock(
-        return_value={"token_count": 1, "token_bandwidth_total": 2, "token_download_total": 3}
     )
     # Provide required auxiliary method mocks to avoid network calls
     now_evt = int(time.time())
@@ -678,7 +643,7 @@ def test_realtime_bandwidth_metrics(aggregator, instance_good, usage_resp_good, 
 
 
 def test_realtime_bandwidth_metrics_insufficient_points(
-    aggregator, instance_good, usage_resp_good, entitlements_test_json
+    aggregator, instance_good, usage_resp_good
 ):
     check = CloudsmithCheck('cloudsmith', {}, [dict(instance_good, enable_realtime_bandwidth=True)])
     check.get_parsed_usage_info = MagicMock(
@@ -700,9 +665,6 @@ def test_realtime_bandwidth_metrics_insufficient_points(
             "storage_configured_gb": 2.0,
             "bandwidth_configured_gb": 4.0,
         }
-    )
-    check.get_parsed_entitlement_info = MagicMock(
-        return_value={"token_count": 1, "token_bandwidth_total": 2, "token_download_total": 3}
     )
     now_evt = int(time.time())
     check.get_parsed_audit_log_info = MagicMock(
@@ -862,9 +824,6 @@ def test_check_continues_on_usage_api_failure(aggregator, instance_good, mocker)
     check = CloudsmithCheck('cloudsmith', {}, [instance_good])
 
     check.get_parsed_usage_info = MagicMock(side_effect=Exception("usage API down"))
-    check.get_parsed_entitlement_info = MagicMock(
-        return_value={"token_count": 5, "token_bandwidth_total": 100, "token_download_total": 10}
-    )
     check.get_parsed_audit_log_info = MagicMock(
         return_value=[
             {
@@ -886,8 +845,7 @@ def test_check_continues_on_usage_api_failure(aggregator, instance_good, mocker)
     # Should not raise
     check.check(None)
 
-    # Usage defaults should be used (-1), but entitlement metrics should still be submitted
-    aggregator.assert_metric("cloudsmith.token_count", 5)
+    # Usage defaults should be used (-1), but other metrics should still be submitted
     aggregator.assert_metric("cloudsmith.storage_used", -1)
 
 
@@ -915,9 +873,6 @@ def test_check_continues_on_members_api_failure(aggregator, instance_good, mocke
             "bandwidth_configured_gb": 4.0,
         }
     )
-    check.get_parsed_entitlement_info = MagicMock(
-        return_value={"token_count": 5, "token_bandwidth_total": 100, "token_download_total": 10}
-    )
     check.get_parsed_audit_log_info = MagicMock(
         return_value=[
             {
@@ -941,5 +896,4 @@ def test_check_continues_on_members_api_failure(aggregator, instance_good, mocke
 
     # Other metrics should still be submitted
     aggregator.assert_metric("cloudsmith.storage_used", 10.0)
-    aggregator.assert_metric("cloudsmith.token_count", 5)
     aggregator.assert_service_check("cloudsmith.storage", CloudsmithCheck.OK)
